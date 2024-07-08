@@ -44,7 +44,7 @@ func (s *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 type TransferTxParams struct {
 	FromAccountId int64 `json:"from_account_id"`
 	ToAccountId   int64 `json:"to_account_id"`
-	Amount        int   `json:"amount"`
+	Amount        int64 `json:"amount"`
 }
 
 type TransferTxResponse struct {
@@ -58,5 +58,44 @@ type TransferTxResponse struct {
 // transfers money from one account to the other ...
 // creates a transfer record, then two entry records for each account, updates both accounts using the entry records
 func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResponse, error) {
+	var response TransferTxResponse
 
+	// start executing a transaction
+	_ = s.execTx(ctx, func(q *Queries) error {
+		var err error
+
+		// create a new transfer record
+		response.Transfer, err = s.CreateTransfer(ctx, CreateTransferParams{
+			FromAccountID: arg.FromAccountId,
+			ToAccountID:   arg.ToAccountId,
+			Amount:        arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		// create entry for account sending
+		response.EntryFrom, err = s.CreateEntry(ctx, CreateEntryParams{
+			AccountID: arg.FromAccountId,
+			Amount:    -arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		// create entry for account receiving
+		response.EntryFrom, err = s.CreateEntry(ctx, CreateEntryParams{
+			AccountID: arg.ToAccountId,
+			Amount:    arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		// TODO: update account to be done
+
+		return nil
+	})
+
+	return response, nil
 }
