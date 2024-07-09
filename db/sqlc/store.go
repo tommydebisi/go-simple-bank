@@ -57,14 +57,14 @@ type TransferTxResponse struct {
 
 // transfers money from one account to the other ...
 // creates a transfer record, then two entry records for each account, updates both accounts using the entry records
-func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (*TransferTxResponse, error) {
+func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResponse, error) {
 	var response TransferTxResponse
 
-	// create a transaction to be executed
-	err := s.execTx(ctx, func(q *Queries) error {
+	// start executing a transaction
+	_ = s.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		// create a transfer record
+		// create a new transfer record
 		response.Transfer, err = s.CreateTransfer(ctx, CreateTransferParams{
 			FromAccountID: arg.FromAccountId,
 			ToAccountID:   arg.ToAccountId,
@@ -105,4 +105,10 @@ func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (*Transfer
 	}
 
 	return &response, nil
+		// TODO: update account to be done
+
+		return nil
+	})
+
+	return response, nil
 }
