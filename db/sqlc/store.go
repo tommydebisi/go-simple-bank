@@ -32,7 +32,7 @@ func (s *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 	if err != nil {
 		// rollback if error occurs when performing queries
 		if rollBackErr := tx.Rollback(); rollBackErr != nil {
-			return fmt.Errorf("Error rolling back transaction: %v", rollBackErr)
+			return fmt.Errorf("error rolling back transaction: %v", rollBackErr)
 		}
 		return err
 	}
