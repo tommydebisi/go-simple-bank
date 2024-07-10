@@ -61,11 +61,11 @@ func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferT
 	var response TransferTxResponse
 
 	// start executing a transaction
-	_ = s.execTx(ctx, func(q *Queries) error {
+	err := s.execTx(ctx, func(q *Queries) error {
 		var err error
 
 		// create a new transfer record
-		response.Transfer, err = s.CreateTransfer(ctx, CreateTransferParams{
+		response.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
 			FromAccountID: arg.FromAccountId,
 			ToAccountID:   arg.ToAccountId,
 			Amount:        arg.Amount,
@@ -75,7 +75,7 @@ func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferT
 		}
 
 		// create entry record for account sending and subtract amount
-		response.EntryFrom, err = s.CreateEntry(ctx, CreateEntryParams{
+		response.EntryFrom, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountId,
 			Amount:    -arg.Amount,
 		})
@@ -84,7 +84,7 @@ func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferT
 		}
 
 		// create entry record for account receiving and add amount
-		response.EntryFrom, err = s.CreateEntry(ctx, CreateEntryParams{
+		response.EntryFrom, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountId,
 			Amount:    arg.Amount,
 		})
@@ -100,15 +100,6 @@ func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferT
 
 		return nil
 	})
-	if err != nil {
-		return nil, fmt.Errorf("an error occurred with transfer: %v", err)
-	}
 
-	return &response, nil
-		// TODO: update account to be done
-
-		return nil
-	})
-
-	return response, nil
+	return response, err
 }
